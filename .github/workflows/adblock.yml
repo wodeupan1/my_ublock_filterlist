@@ -24,7 +24,6 @@ jobs:
           echo "AD_PC=https://github.com/o0HalfLife0o/list/raw/master/ad-pc.txt" >> $GITHUB_ENV
           echo "AD_MO=https://github.com/o0HalfLife0o/list/raw/master/ad.txt" >> $GITHUB_ENV
           echo "AD_ETC=https://github.com/o0HalfLife0o/list/raw/master/ad-edentw.txt" >> $GITHUB_ENV
-          echo "AD_MY=https://github.com/wodeupan1/my_ublock_filterlist/raw/main/my.txt" >> $GITHUB_ENV
           echo "GOPATH=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
           echo "$(dirname $GITHUB_WORKSPACE)/bin" >> $GITHUB_PATH
         shell: bash
@@ -42,7 +41,6 @@ jobs:
           curl -sSL $AD_PC | sed -e '/^! /d' -e '1c ! EasyList' -e '/^!$/d' -e '/The End/d'  -e '/^$/d' > ./ad-pc.txt
           curl -sSL $AD_MO | sed -e '/^! /d' -e '1c ! EasyList China' -e '/^!$/d' -e '/The End/d'  -e '/^$/d' > ./ad.txt
           curl -sSL $AD_ETC | sed -e '/^! /d' -e '1c ! EasyPrivacy' -e '/^!$/d' > ./ad-edentw.txt
-          curl -sSL $AD_MY| sed -e '/^! /d' -e '1c ! EasyPrivacy' -e '/^!$/d' > ./my.txt
           for i in $(ls *.txt); do
             if [[ `cat $i |wc -l` -eq 0 ]]; then
               echo "::set-output name=status::failed"
