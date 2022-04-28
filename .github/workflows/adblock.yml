@@ -23,7 +23,7 @@ jobs:
           echo "AD_PC=https://github.com/o0HalfLife0o/list/raw/master/ad-pc.txt" >> $GITHUB_ENV
           echo "AD_MO=https://github.com/o0HalfLife0o/list/raw/master/ad.txt" >> $GITHUB_ENV
           echo "AD_ETC=https://github.com/o0HalfLife0o/list/raw/master/ad-edentw.txt" >> $GITHUB_ENV
-	  echo "AD_MY=https://github.com/wodeupan1/my_ublock_filterlist/raw/main/my.txt" >> $GITHUB_ENV
+          echo "AD_MY=https://github.com/wodeupan1/my_ublock_filterlist/raw/main/my.txt" >> $GITHUB_ENV
           echo "GOPATH=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
           echo "$(dirname $GITHUB_WORKSPACE)/bin" >> $GITHUB_PATH
         shell: bash
