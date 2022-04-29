@@ -20,6 +20,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-    - name: Update adblocklist
-      run: |
-        python update.py
+      - name: Update adblocklist
+        run: |
+          python update.py
