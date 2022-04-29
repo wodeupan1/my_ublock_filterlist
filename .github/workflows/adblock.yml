@@ -10,112 +10,16 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
     steps:
-      - name: Setup Go 1.x
-        uses: actions/setup-go@v3
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
         with:
-          go-version: "^1.14"
+          python-version: ${{ matrix.python-version }}
 
-      - name: Set $GOPATH and more variables
-        run: |
-          echo "RELEASE_NAME=Released on $(date -d "8 hour" -u +%Y%m%d%H%M)" >> $GITHUB_ENV
-          echo "TAG_NAME=$(date -d "8 hour" -u +%Y%m%d%H%M)" >> $GITHUB_ENV
-          echo "MODIFIED_TIME=$(date -d "8 hour" -u "+%Y年%m月%d日 %H:%M")" >> $GITHUB_ENV
-          echo "AD_PC=https://github.com/o0HalfLife0o/list/raw/master/ad-pc.txt" >> $GITHUB_ENV
-          echo "AD_MO=https://github.com/o0HalfLife0o/list/raw/master/ad.txt" >> $GITHUB_ENV
-          echo "AD_ETC=https://github.com/o0HalfLife0o/list/raw/master/ad-edentw.txt" >> $GITHUB_ENV
-          echo "GOPATH=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
-          echo "$(dirname $GITHUB_WORKSPACE)/bin" >> $GITHUB_PATH
-        shell: bash
-
-      - name: Checkout the "master" branch
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-
-      - name: Get every files
-        id: download
-        run: |
-          mkdir -p ./download/
-          cd ./download
-          curl -sSL $AD_PC | sed -e '/^! /d' -e '1c ! EasyList' -e '/^!$/d' -e '/The End/d'  -e '/^$/d' > ./ad-pc.txt
-          curl -sSL $AD_MO | sed -e '/^! /d' -e '1c ! EasyList China' -e '/^!$/d' -e '/The End/d'  -e '/^$/d' > ./ad.txt
-          curl -sSL $AD_ETC | sed -e '/^! /d' -e '1c ! EasyPrivacy' -e '/^!$/d' > ./ad-edentw.txt
-          for i in $(ls *.txt); do
-            if [[ `cat $i |wc -l` -eq 0 ]]; then
-              echo "::set-output name=status::failed"
-              break
-            else
-              echo "::set-output name=status::success"
-              echo "" >> $i
-            fi
-          done
-      - name: Generate adblock files
-        if: steps.download.outputs.status == 'success'
-        run: |
-          mkdir -p ./new/
-          cd ./download
-          cat ad-pc.txt ad-edentw.txt ../my.txt > ../new/pc.txt
-          cat ad.txt ad-edentw.txt ../my.txt > ../new/mo.txt
-          for i in $(ls ../new/*.txt); do
-            sed -i '/^$/d' $i
-          done
-      - name: Diff and addChecksum
-        id: diffResult
-        if: steps.download.outputs.status == 'success'
-        run: |
-          mkdir -p ./old_no_title/
-          chmod +x ./mod/addChecksum.pl
-          for i in $(ls ad*.txt); do
-            sed '1,/^!$/d' $i > ./old_no_title/$i
-          done
-          diffFile="$(diff -q new/ old_no_title/ |grep -o '[a-zA-Z0-9-]\+.txt' |sort -u)"
-          if [ -n "$diffFile" ]; then
-            for i in $diffFile ; do
-              titleName=$(echo "$i" |sed 's#.txt#-title.txt#')
-              cat ./mod/$titleName ./new/$i > ./$i
-              sed -i -e "s#201412030951#$TAG_NAME#" -e "s#201412030952#$MODIFIED_TIME#" ./$i
-              perl ./mod/addChecksum.pl ./$i
-              echo "::set-output name=status::success"
-            done
-          else
-            echo "::set-output name=status::failed"
-          fi
-      - name: Deliver download Dir
-        uses: actions/upload-artifact@v3
-        if: steps.download.outputs.status == 'failed'
-        with:
-          name: AllFiles
-          path: |
-            ./download/
-      - name: Deliver new and old_no_title Di
-        uses: actions/upload-artifact@v3
-        if: steps.diffResult.outputs.status == 'failed'
-        with:
-          name: AllFiles
-          path: |
-            *
-            !./.git/
-      - name: Git push assets to "master" branch
-        continue-on-error: true
-        if: steps.diffResult.outputs.status == 'success'
-        run: |
-          rm -rf download new old_no_title
-          sed -i '/url =/d' ./.git/config
-          git config --local user.name "actions"
-          git config --local user.email "action@github.com"
-          #git config --add core.compression -1
-          git add --all
-          git commit -m "${{ env.RELEASE_NAME }}"
-          git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-          git fetch --unshallow origin
-          git push -u origin master
-      - name: Purge jsdelivr cache
-        if: steps.diffResult.outputs.status == 'success'
-        run: |
-          result=$(curl -s https://purge.jsdelivr.net/gh/wodeupan1/my_ublock_filterlist@master/)
-          if echo $result |grep -q 'success.*true'; then
-            echo "jsdelivr缓存更新成功"
-          else
-            echo $result
-          fi
+    - name: Update adblocklist
+      run: |
+        python update.py
