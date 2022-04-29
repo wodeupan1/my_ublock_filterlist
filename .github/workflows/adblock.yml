@@ -55,8 +55,8 @@ jobs:
         run: |
           mkdir -p ./new/
           cd ./download
-          cat ad-pc.txt ad-edentw.txt my.txt > ../new/pc.txt
-          cat ad.txt ad-edentw.txt my.txt > ../new/mo.txt
+          cat ad-pc.txt ad-edentw.txt ../my.txt > ../new/pc.txt
+          cat ad.txt ad-edentw.txt ../my.txt > ../new/mo.txt
           for i in $(ls ../new/*.txt); do
             sed -i '/^$/d' $i
           done
